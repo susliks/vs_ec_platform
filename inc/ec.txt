@@ -1,0 +1,205 @@
+/*
+@brief 本程序测试sqlite数据库的增删改查
+@date 2012-09-03
+*/
+// SQLiteTest.cpp : Defines the entry point for the console application.
+// 
+
+#include "stdafx.h"
+#include "sqlite3.h"
+#include <iostream>
+using namespace std;
+
+sqlite3 * pDB = NULL;
+
+//增加用户
+bool AddUser(const string& sName, const string& sAge);
+//删除用户
+bool DeleteUser(const string& sName);
+//修改用户
+bool ModifyUser(const string& sName, const string& sAge);
+//查找用户
+bool SelectUser();
+
+int main(int argc, _TCHAR* argv[])
+{
+
+	sqlite3 * db;
+	int result;
+	char * errmsg = NULL;
+	char **dbResult; //是 char ** 类型，两个*号
+	int nRow, nColumn;
+	int i, j;
+	int index;
+
+	result = sqlite3_open("F:\\SQLite3\\test.db", &db);
+	if (result != SQLITE_OK)
+	{
+		//数据库打开失败
+		return -1;
+	}
+
+	//数据库操作代码
+	//假设前面已经创建了 MyTable_1 表
+	//开始查询，传入的 dbResult 已经是 char **，这里又加了一个 & 取地址符，传递进去的就成了 char ***
+	result = sqlite3_get_table(db, "select * from user2 where haha = \"2\"", &dbResult, &nRow, &nColumn, &errmsg);
+	//result = sqlite3_get_table(db, "insert into user2(h, haha, hahaha) value(\"1\", \"BlueMountain\"，\"well\"", &dbResult, &nRow, &nColumn, &errmsg);
+	char *b = "insert into user2(h,haha, hahaha) values(\"aa\",\"bb\", \"a\");";
+	int nRes = sqlite3_exec(db, b, 0, 0, &errmsg);
+	printf("%s", errmsg);
+	if (SQLITE_OK == result)
+	{
+		//查询成功
+		index = nColumn; //前面说过 dbResult 前面第一行数据是字段名称，从 nColumn 索引开始才是真正的数据
+		printf("查到%d条记录\n", nRow);
+
+		for (i = 0; i < nRow; i++)
+		{
+			printf("第 %d 条记录\n", i + 1);
+			for (j = 0; j < nColumn; j++)
+			{
+				printf("字段名:%s  > 字段值:%s\n", dbResult[j], dbResult[index]);
+				++index; // dbResult 的字段值是连续的，从第0索引到第 nColumn - 1索引都是字段名称，从第 nColumn 索引开始，后面都是字段值，它把一个二维的表（传统的行列表示法）用一个扁平的形式来表示
+			}
+			printf("------ - \n");
+		}
+	}
+
+
+	/*//打开路径采用utf-8编码
+	//如果路径中包含中文，需要进行编码转换
+	int nRes = sqlite3_open("F:\\SQLite3\\test.db", &pDB);
+	if (nRes != SQLITE_OK)
+	{
+		cout << "Open database fail: " << sqlite3_errmsg(pDB);
+		goto QUIT;
+	}
+
+	//添加“赵钱孙李”
+	if (!AddUser("zhao", "18")
+		|| !AddUser("qian", "19")
+		|| !AddUser("sun", "20")
+		|| !AddUser("li", "21"))
+	{
+		goto QUIT;
+	}
+
+	//删除“赵”
+	if (!DeleteUser("zhao"))
+	{
+		goto QUIT;
+	}
+
+	//修改“孙”
+	if (!ModifyUser("sun", "15"))
+	{
+		goto QUIT;
+	}
+
+	//查找用户
+	if (!SelectUser())
+	{
+		goto QUIT;
+	}
+
+QUIT:
+	sqlite3_close(pDB);
+
+	return 0;*/
+}
+
+bool AddUser(const string& sName, const string& sAge)
+{
+	string strSql = "";
+	strSql += "insert into user(name,age)";
+	strSql += "values('";
+	strSql += sName;
+	strSql += "',";
+	strSql += sAge;
+	strSql += ");";
+
+	char* cErrMsg;
+	int nRes = sqlite3_exec(pDB, strSql.c_str(), 0, 0, &cErrMsg);
+	if (nRes != SQLITE_OK)
+	{
+		cout << "add user fail: " << cErrMsg << endl;
+		return false;
+	}
+	else
+	{
+		cout << "add user success: " << sName.c_str() << "\t" << sAge.c_str() << endl;
+	}
+
+	return true;
+}
+
+bool DeleteUser(const string& sName)
+{
+	string strSql = "";
+	strSql += "delete from user where name='";
+	strSql += sName;
+	strSql += "';";
+
+	char* cErrMsg;
+	int nRes = sqlite3_exec(pDB, strSql.c_str(), 0, 0, &cErrMsg);
+	if (nRes != SQLITE_OK)
+	{
+		cout << "delete user fail: " << cErrMsg << endl;
+		return false;
+	}
+	else
+	{
+		cout << "delete user success: " << sName.c_str() << endl;
+	}
+
+	return true;
+}
+
+bool ModifyUser(const string& sName, const string& sAge)
+{
+	string strSql = "";
+	strSql += "update user set age =";
+	strSql += sAge;
+	strSql += " where name='";
+	strSql += sName;
+	strSql += "';";
+
+	char* cErrMsg;
+	int nRes = sqlite3_exec(pDB, strSql.c_str(), 0, 0, &cErrMsg);
+	if (nRes != SQLITE_OK)
+	{
+		cout << "modify user fail: " << cErrMsg << endl;
+		return false;
+	}
+	else
+	{
+		cout << "modify user success: " << sName.c_str() << "\t" << sAge.c_str() << endl;
+	}
+
+	return true;
+}
+
+static int UserResult(void *NotUsed, int argc, char **argv, char **azColName)
+{
+	for (int i = 0; i < argc; i++)
+	{
+		cout << azColName[i] << " = " << (argv[i] ? argv[i] : "NULL") << ", ";
+	}
+	cout << endl;
+
+	return 0;
+}
+
+bool SelectUser()
+{
+	char* cErrMsg;
+	int res = sqlite3_exec(pDB, "select * from user;", UserResult, 0, &cErrMsg);
+
+	if (res != SQLITE_OK)
+	{
+		cout << "select fail: " << cErrMsg << endl;
+		return false;
+	}
+
+	return true;
+}
