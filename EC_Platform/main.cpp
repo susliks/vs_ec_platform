@@ -6,6 +6,7 @@
 
 
 
+
 int main()
 {
 	Product *p = new Food;
