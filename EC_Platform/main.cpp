@@ -5,6 +5,7 @@
 #include "head.h"
 
 
+
 int main()
 {
 	Product *p = new Food;
