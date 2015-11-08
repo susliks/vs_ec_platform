@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "head.h"
 
-
 int main()
 {
 	Product *p = new Food;
