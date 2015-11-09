@@ -86,6 +86,26 @@ int Product::getSalesVolume(string productId)
 		return -1;
 }
 
+bool Product::setSalesVolume(string productId, int num)
+{
+	openDB();
+
+	string snum = int2string(num, 0);
+
+	int result;
+	char * errmsg = NULL;
+
+	string SQLCode = "update product set salesVolume = " + snum + " where productId = \"" + productId + "\"";
+	result = sqlite3_exec(db, SQLCode.c_str(), 0, 0, &errmsg);
+
+	closeDB();
+
+	if (result == SQLITE_OK)
+		return true;
+	else
+		return false;
+}
+
 int Product::getLeft(string productId)
 {
 	openDB();
@@ -103,6 +123,26 @@ int Product::getLeft(string productId)
 		return atoi(dbResult[12]);
 	else
 		return -1;
+}
+
+bool Product::setLeft(string productId, int num)
+{
+	openDB();
+
+	string snum = int2string(num, 0);
+
+	int result;
+	char * errmsg = NULL;
+
+	string SQLCode = "update product set left = " + snum + " where productId = \"" + productId + "\"";
+	result = sqlite3_exec(db, SQLCode.c_str(), 0, 0, &errmsg);
+
+	closeDB();
+
+	if (result == SQLITE_OK)
+		return true;
+	else
+		return false;
 }
 
 string Product::getDescription(string productId)
@@ -143,6 +183,24 @@ bool Product::judgeExistProductId(string productId)
 	else
 		return false;
 	closeDB();
+}
+
+double Product::buy(Product *product, string productId, int num)
+{
+	int preLeft = product->getLeft(productId);
+	if (num > preLeft)
+	{
+		cout << "¿â´æ²»×ã" << endl;
+		return -1;	//´íÎó·µ»Ø
+	}
+	int preSalesVolume = product->getSalesVolume(productId);
+	int curLeft = preLeft - num;
+	int curSalesVolume = preSalesVolume + num;
+
+	product->setSalesVolume(productId, curSalesVolume);
+	product->setLeft(productId, curLeft);
+
+	return product->getPrice(productId);
 }
 
 /*

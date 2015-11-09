@@ -21,7 +21,7 @@ bool Platform::judgeExistClientId(string logId)
 	char **dbResult; //是 char ** 类型，两个*号
 	int nRow, nColumn;
 
-	string SQLCode = "select * from product where logId = \"" + logId + "\";";
+	string SQLCode = "select * from client where logId = \"" + logId + "\";";
 	result = sqlite3_get_table(clientDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 	closeDB();
@@ -46,7 +46,7 @@ string Platform::getPassword(string logId)
 	closeDB();	//释放指针
 
 	if (nRow > 0)
-		return (string)dbResult[9];
+		return (string)dbResult[3];
 	else
 		return (string)"";
 }
@@ -54,9 +54,9 @@ string Platform::getPassword(string logId)
 bool Platform::addClient()
 {
 
+	string logId;
 	while (true)
-	{
-		string logId;
+	{	
 		char tmpBuf[BUF_LEN];
 		cout << "input the logId you want:";
 		cin >> tmpBuf;
@@ -69,12 +69,14 @@ bool Platform::addClient()
 	//TODO:输入两次密码的验证
 	string password;
 	char tmpBuf[BUF_LEN];
+	cout << "password:";
 	cin >> tmpBuf;
 	password = tmpBuf;
 
-	
-
-
+	if (createRecord(logId, password))
+		return true;
+	else
+		return false;
 
 }
 
@@ -144,6 +146,11 @@ bool Platform::setPassword(string logId, string newPassword)
 
 	string SQLCode = "update client set password = " + newPassword + " where logId = \"" + logId + "\"";
 	result = sqlite3_exec(clientDb, SQLCode.c_str(), 0, 0, &errmsg);
+
+	if (result == SQLITE_OK)
+		return true;
+	else
+		return false;
 }
 
 bool Platform::verifyPassword(string logId, string inputPassword)
@@ -172,6 +179,29 @@ void Platform::showBooks()
 
 }
 
+string Platform::getProductType(string productId)
+{
+	sqlite3 *db;
+
+	int result;
+	char * errmsg = NULL;
+	char **dbResult; //是 char ** 类型，两个*号
+	int nRow, nColumn;
+
+	result = sqlite3_open("productData.db", &db);
+
+	string SQLCode = "select * from product where productId = \"" + productId + "\";";
+	result = sqlite3_get_table(clientDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+
+	sqlite3_close(db);
+
+	if (nRow > 0)
+		return (string)dbResult[8];
+	else
+		return (string)"none";
+
+}
+
 bool Platform::addToCart()
 {
 	cout << "productId:";
@@ -179,11 +209,28 @@ bool Platform::addToCart()
 	cin >> tmpBuf;
 	string productId = tmpBuf;
 
-	Product *product;
-	if (product->judgeExistProductId(productId))
-		cart.push(productId);
-	//TODO:不知道这种写法可不可以
-	//！！！！若不行的话，就多写一个productVoid子类继承它
+	string type = getProductType(productId);
+	if (type == "food")
+	{
+		Product *product = new Food;
+	}
+	else if (type == "clothes")
+	{
+		//Product *product = new Clothes;
+	}
+	else if (type == "books")
+	{
+		//Product *product = new Books;
+	}
+	else
+	{
+		cout << "no such productId" << endl;
+		return false;
+	}
+	
+	cart.push(productId);
+	return true;
+	
 }
 
 bool Platform::payForProduct()
@@ -200,11 +247,43 @@ bool Platform::payForProduct()
 	cin >> tmpBuf;
 	string productId = tmpBuf;
 
+	cout << "num:";
+	int num;
+	cin >> num;
+
+	string type = getProductType(productId);
+
 	Product *product;
-	if (product->judgeExistProductId(productId))
-		cart.push(productId);
-	
-	//TODO:不知道这种写法可不可以
+	if (type == "food")
+	{
+		product = new Food;
+	}
+	/*else if (type == "clothes")
+	{
+		Product *product = new Clothes;
+	}
+	else if (type == "books")
+	{
+		Product *product = new Books;
+	}*/
+	else
+	{
+		cout << "no such productId" << endl;
+		return false;
+	}
+
+	//TODO:第三部分
+	//付款
+	//if付款成功再执行下面的
+	//具体的可能要交给product类去执行
+
+	double cost = 0;
+	cost += product->buy(product, productId, num);
+	if (cost == -1)
+		return false;
+
+	cout << "buy successfully(3rd part)" << endl;	
+	return true;
 }
 
 bool Platform::payForCart()
@@ -216,6 +295,7 @@ bool Platform::payForCart()
 		return false;
 	}
 
+	//TODO:待完成
 
 }
 

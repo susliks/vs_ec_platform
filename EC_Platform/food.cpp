@@ -27,7 +27,7 @@ void Food::showAllThisType()
 	result = sqlite3_get_table(Product::db, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 
-	cout << "-----------------------------------------------";
+	cout << "-----------------------------------------------" << endl;
 	for (int i = 1; i <= nRow; i++)
 	{
 		cout << "product ID:" << dbResult[i * 7 + 0] << endl;
@@ -37,6 +37,7 @@ void Food::showAllThisType()
 		cout << "sales volumn:" << dbResult[i * 7 + 4] << endl;
 		cout << "left:" << dbResult[i * 7 + 5] << endl;
 		cout << "description:" << dbResult[i * 7 + 6] << endl;
+		cout << "-----------------------------------------------" << endl;
 	}
 
 	closeDB();

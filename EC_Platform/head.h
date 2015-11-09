@@ -15,6 +15,8 @@ using namespace std;
 const int MAX_CARD_NUM = 5;
 const int BUF_LEN = 20;
 
+string int2string(int num, int len);
+
 struct PlatClientInfo
 {
 	string logId;
@@ -45,7 +47,8 @@ private:
 	void closeDB();
 	bool createRecord(string logId, string password);
 	bool setPassword(string logId, string newPassword);
-	
+	string getProductType(string productId);
+
 public:
 	bool addClient();
 	void clientInfoUpdate();
@@ -81,12 +84,15 @@ public:
 	~Product();
 	virtual double getPrice(string productId);
 	virtual void setDiscount(double newDiscount) = 0;
-	virtual string getName(string productId);
-	virtual int getSalesVolume(string productId);
-	virtual int getLeft(string productId);
+	string getName(string productId);
+	int getSalesVolume(string productId);
+	bool setSalesVolume(string productId, int num);
+	int getLeft(string productId);
+	bool setLeft(string productId, int num);
 	virtual string getDescription(string productId);
 	virtual void showAllThisType() = 0;
 	bool judgeExistProductId(string productId);
+	double buy(Product *product, string productId, int num);
 	//set操作在数据库端完成
 	//TODO:这里有一些已经不是virtual
 };
