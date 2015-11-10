@@ -42,6 +42,7 @@ double Product::getPrice(string productId)
 	//cout << errmsg << endl;
 	//cout << dbResult[10] << endl;
 	closeDB();
+
 	if (nRow > 0)
 		return atof(dbResult[10]);
 	else
@@ -200,8 +201,9 @@ double Product::buy(Product *product, string productId, int num)
 	product->setSalesVolume(productId, curSalesVolume);
 	product->setLeft(productId, curLeft);
 
-	return product->getPrice(productId);
+	return product->getPrice(productId) * num;
 }
+
 
 /*
 string Product::getName(string productId)

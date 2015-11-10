@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "head.h"
 
-double Food::discount = 1;	//类中静态变量的初始化 方式稍微不寻常
+double Books::discount = 1;	//类中静态变量的初始化 方式稍微不寻常
 
-double Food::getPrice(string productId)
+double Books::getPrice(string productId)
 {
 	double result = Product::getPrice(productId);
 
@@ -12,12 +12,12 @@ double Food::getPrice(string productId)
 	return result;
 }
 
-void Food::setDiscount(double newDiscount)
+void Books::setDiscount(double newDiscount)
 {
 	discount = newDiscount;
 }
 
-void Food::showAllThisType()
+void Books::showAllThisType()
 {
 	openDB();
 	int result;
@@ -25,7 +25,7 @@ void Food::showAllThisType()
 	char **dbResult; //是 char ** 类型，两个*号
 	int nRow, nColumn;
 
-	string SQLCode = "select * from product where type = \"food\";";
+	string SQLCode = "select * from product where type = \"books\";";
 	result = sqlite3_get_table(Product::db, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 

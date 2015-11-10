@@ -44,5 +44,11 @@
     <ClCompile Include="platform.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="clothes.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="books.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

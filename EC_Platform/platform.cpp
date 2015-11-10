@@ -5,12 +5,12 @@ void Platform::openDB()
 {
 	int result;
 
-	result = sqlite3_open("platData.db", &clientDb);
+	result = sqlite3_open("platData.db", &platDb);
 }
 
 void Platform::closeDB()
 {
-	sqlite3_close(clientDb);
+	sqlite3_close(platDb);
 }
 
 bool Platform::judgeExistClientId(string logId)
@@ -22,7 +22,7 @@ bool Platform::judgeExistClientId(string logId)
 	int nRow, nColumn;
 
 	string SQLCode = "select * from client where logId = \"" + logId + "\";";
-	result = sqlite3_get_table(clientDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 	closeDB();
 	if (nRow > 0)
@@ -41,7 +41,7 @@ string Platform::getPassword(string logId)
 	int nRow, nColumn;
 
 	string SQLCode = "select * from client where logId = \"" + logId + "\";";
-	result = sqlite3_get_table(clientDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 	closeDB();	//释放指针
 
@@ -91,7 +91,7 @@ bool Platform::createRecord(string logId, string password)
 	SQLCode = SQLCode + "(logId, password)";
 	SQLCode = SQLCode + "values(\"" + logId + "\", \"" + password +  + "\");";
 
-	result = sqlite3_exec(clientDb, SQLCode.c_str(), 0, 0, &errmsg);
+	result = sqlite3_exec(platDb, SQLCode.c_str(), 0, 0, &errmsg);
 
 	closeDB();	//释放指针
 
@@ -145,7 +145,7 @@ bool Platform::setPassword(string logId, string newPassword)
 	char * errmsg = NULL;
 
 	string SQLCode = "update client set password = " + newPassword + " where logId = \"" + logId + "\"";
-	result = sqlite3_exec(clientDb, SQLCode.c_str(), 0, 0, &errmsg);
+	result = sqlite3_exec(platDb, SQLCode.c_str(), 0, 0, &errmsg);
 
 	if (result == SQLITE_OK)
 		return true;
@@ -167,16 +167,21 @@ void Platform::showFood()
 {
 	Product *product = new Food;	//应该“委托”(delegation)给product去做		
 	product->showAllThisType();		//本质上是一种组合（虽然不是其成员） OO原则：少用继承，多用组合
+	delete product;
 }
 
 void Platform::showClothes()
 {
-
+	Product *product = new Clothes;	//应该“委托”(delegation)给product去做		
+	product->showAllThisType();		//本质上是一种组合（虽然不是其成员） OO原则：少用继承，多用组合
+	delete product;
 }
 
 void Platform::showBooks()
 {
-
+	Product *product = new Books;	//应该“委托”(delegation)给product去做		
+	product->showAllThisType();		//本质上是一种组合（虽然不是其成员） OO原则：少用继承，多用组合
+	delete product;
 }
 
 string Platform::getProductType(string productId)
@@ -191,7 +196,7 @@ string Platform::getProductType(string productId)
 	result = sqlite3_open("productData.db", &db);
 
 	string SQLCode = "select * from product where productId = \"" + productId + "\";";
-	result = sqlite3_get_table(clientDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 	sqlite3_close(db);
 
@@ -204,6 +209,13 @@ string Platform::getProductType(string productId)
 
 bool Platform::addToCart()
 {
+	//先登录才能添加到购物车
+	if (logFlag == false)
+	{
+		cout << "Please log in" << endl;
+		return false;
+	}
+
 	cout << "productId:";
 	char tmpBuf[BUF_LEN];
 	cin >> tmpBuf;
@@ -212,7 +224,7 @@ bool Platform::addToCart()
 	string type = getProductType(productId);
 	if (type == "food")
 	{
-		Product *product = new Food;
+		//Product *product = new Food;
 	}
 	else if (type == "clothes")
 	{
@@ -227,8 +239,12 @@ bool Platform::addToCart()
 		cout << "no such productId" << endl;
 		return false;
 	}
-	
-	cart.push(productId);
+	cout << "num:";
+	int num;
+	cin >> num;
+
+	CartProduct tmp = { productId, num };
+	cart.push_back(tmp);
 	return true;
 	
 }
@@ -253,32 +269,41 @@ bool Platform::payForProduct()
 
 	string type = getProductType(productId);
 
-	Product *product;
+	Product *product = NULL;
 	if (type == "food")
 	{
 		product = new Food;
 	}
-	/*else if (type == "clothes")
+	else if (type == "clothes")
 	{
-		Product *product = new Clothes;
+		product = new Clothes;
 	}
 	else if (type == "books")
 	{
-		Product *product = new Books;
-	}*/
+		product = new Books;
+	}
 	else
 	{
 		cout << "no such productId" << endl;
 		return false;
 	}
 
+
 	//TODO:第三部分
 	//付款
 	//if付款成功再执行下面的
 	//具体的可能要交给product类去执行
+	updateDiscount();
+	updateBonus();
 
 	double cost = 0;
 	cost += product->buy(product, productId, num);
+	if (cost == -1)
+		return false;
+
+	cost = bonusReduction(cost);	//满减优惠
+	cout << "money:" << cost << endl;
+
 	if (cost == -1)
 		return false;
 
@@ -296,7 +321,43 @@ bool Platform::payForCart()
 	}
 
 	//TODO:待完成
+	//
+	if (checkLeft() == false)
+	{
+		cout << "购物车清空" << endl;
+		cart.clear();
+		return false;
+	}
 
+	//计算钱数
+	updateDiscount();
+	updateBonus();
+	double totalMoney = 0; 
+	
+	int cnt = cart.size();
+	Product *p;
+	for (int i = 0; i < cnt; i++)
+	{
+		p = createProduct(getProductType(cart[i].productId));
+		totalMoney = totalMoney + p->getPrice(cart[i].productId) * cart[i].num;
+		delete p;
+	}
+
+	totalMoney = bonusReduction(totalMoney);	//满减优惠
+	cout << "total money:" << totalMoney << endl;
+	//付款
+	//若失败 返回
+
+	for (int i = 0; i < cnt; i++)
+	{
+		p = createProduct(getProductType(cart[i].productId));
+		p->buy(p, cart[i].productId, cart[i].num);
+		delete p;
+	}
+	
+	cout << "购物车清空" << endl;
+	cart.clear();
+	return true;
 }
 
 bool Platform::logInOrOut()
@@ -336,4 +397,127 @@ bool Platform::logInOrOut()
 		cout << "log out successfully" << endl;
 		return true;
 	}
+}
+
+bool Platform::checkLeft()
+{
+	bool Flag = true;
+
+	int cnt = cart.size();
+	for (int i = 0; i < cnt; i++)
+	{
+		string type = getProductType(cart[i].productId);
+		Product *p = createProduct(type);
+		int curLeft = p->getLeft(cart[i].productId);
+		if (curLeft < cart[i].num)
+		{
+			Flag = false;
+			cout << "no enough product:" << cart[i].productId.c_str() << endl;
+		}
+	}
+
+	return Flag;
+}
+
+Product* Platform::createProduct(string type)
+{
+	Product *p = NULL;
+	if (type == "food")
+	{
+		p = new Food;
+	}
+	else if (type == "clothes")
+	{
+		p = new Clothes;
+	}
+	else if (type == "books")
+	{
+		p = new Books;
+	}
+	return p;
+}
+
+bool Platform::updateDiscount()
+{
+	openDB();
+	int result;
+	char * errmsg = NULL;
+	char **dbResult; //是 char ** 类型，两个*号
+	int nRow, nColumn;
+
+	Product *p = NULL;
+
+	//更新FOOD的打折
+	string SQLCode = "select * from setting where item = \"foodDiscount\";";
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	p = new Food;
+	p->setDiscount(atof(dbResult[3]));
+	delete p;
+	
+	//更新CLOTHES的打折
+	SQLCode = "select * from setting where item = \"clothesDiscount\";";
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	p = new Clothes;
+	p->setDiscount(atof(dbResult[3]));
+	delete p;
+
+	//更新BOOKS的打折
+	SQLCode = "select * from setting where item = \"booksDiscount\";";
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	p = new Books;
+	p->setDiscount(atof(dbResult[3]));
+	delete p;
+	
+	closeDB();
+
+	return true;
+}
+
+double Platform::bonusReduction(double curMoney)
+{
+	int bonusCnt = bonus.size();
+	for (int i = bonusCnt-1; i >= 0; i--)
+	{
+		if (curMoney > bonus[i].level)
+		{
+			cout << "原价：" << curMoney << endl;
+			cout << "满" << bonus[i].level << "减" << bonus[i].sub << endl;
+			return curMoney - bonus[i].sub;
+		}
+	}
+	return curMoney;
+}
+
+bool Platform::updateBonus()
+{
+	bonus.clear();
+
+	openDB();
+	int result;
+	char * errmsg = NULL;
+	char **dbResult; //是 char ** 类型，两个*号
+	int nRow, nColumn;
+	
+	string SQLCode = "select * from setting where item = \"bonusCnt\";";
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	int bonusCnt = atoi(dbResult[3]);
+
+	SQLCode = "select * from bonus;";
+	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	
+	closeDB();
+
+	for (int i = 1; i <= bonusCnt; i++)
+	{
+		if (dbResult[2 * i + 1] == NULL)	//容错处理
+			return false;
+
+		Bonus newBonus;
+		newBonus.level = atof(dbResult[2 * i + 0]);
+		newBonus.sub = atof(dbResult[2 * i + 1]);
+		bonus.push_back(newBonus);
+	}
+	
+	//sort(bonus.begin(), bonus.end());
+	return true;
 }

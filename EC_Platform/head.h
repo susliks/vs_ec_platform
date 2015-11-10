@@ -9,6 +9,7 @@
 #include <list>
 #include <vector>
 #include <queue>
+#include <algorithm>
 
 using namespace std;
 
@@ -23,8 +24,20 @@ struct PlatClientInfo
 	string bankCard[MAX_CARD_NUM][2];
 };
 
+struct CartProduct
+{
+	string productId;
+	int num;
+};
+
+struct Bonus
+{
+	double level;
+	double sub;
+};
+
 //最多绑定五张银行卡
-struct productInfo
+struct ProductInfo
 {
 	string productId;
 	string name;
@@ -34,20 +47,24 @@ struct productInfo
 	string description;
 };
 
+class Product;
+
 class Platform
 {
 private:
-	sqlite3 * clientDb;
+	sqlite3 * platDb;
 
 	bool logFlag;
 	PlatClientInfo curClient;
-	queue<string> cart;
+	vector<CartProduct> cart;	//购物车
+	vector<Bonus> bonus;
 
 	void openDB();
 	void closeDB();
 	bool createRecord(string logId, string password);
 	bool setPassword(string logId, string newPassword);
 	string getProductType(string productId);
+	Product* createProduct(string type);
 
 public:
 	bool addClient();
@@ -63,6 +80,10 @@ public:
 	bool payForProduct();	//直接购买
 	bool payForCart();		//购物车结算
 	bool logInOrOut();
+	bool checkLeft();
+	bool updateDiscount();		//品类打折
+	double bonusReduction(double curMoney);	//满减优惠
+	bool updateBonus();
 };
 
 class Product
@@ -93,6 +114,7 @@ public:
 	virtual void showAllThisType() = 0;
 	bool judgeExistProductId(string productId);
 	double buy(Product *product, string productId, int num);
+
 	//set操作在数据库端完成
 	//TODO:这里有一些已经不是virtual
 };
@@ -100,7 +122,7 @@ public:
 class Food : public Product
 {
 private:
-	static double discount;
+	static double discount;	//类的静态变量 只有一份 对所有实例可见
 
 public:
 	double getPrice(string productId);
@@ -111,12 +133,24 @@ public:
 
 class Clothes : public Product
 {
+private:
+	static double discount;	//类的静态变量 只有一份 对所有实例可见
 
+public:
+	double getPrice(string productId);
+	void setDiscount(double newDiscount);
+	void showAllThisType();
 };
 
 class Books : public Product
 {
+private:
+	static double discount;	//类的静态变量 只有一份 对所有实例可见
 
+public:
+	double getPrice(string productId);
+	void setDiscount(double newDiscount);
+	void showAllThisType();
 };
 
 

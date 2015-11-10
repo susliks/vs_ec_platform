@@ -153,7 +153,9 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="clothes.cpp" />
     <ClCompile Include="food.cpp" />
+    <ClCompile Include="books.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="platform.cpp" />
     <ClCompile Include="product.cpp" />

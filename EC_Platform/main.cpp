@@ -1,6 +1,8 @@
 // EC_Platform.cpp : 定义控制台应用程序的入口点。
 //
 
+//TODO:检查所有new和open操作有没有及时关闭
+
 #include "stdafx.h"
 #include "head.h"
 
@@ -44,11 +46,11 @@ int main()
 			break;
 
 		case 2:
-
+			plat.showClothes();
 			break;
 
 		case 3:
-			
+			plat.showBooks();
 			break;
 
 		case 4:
@@ -56,7 +58,7 @@ int main()
 			break;
 
 		case 5:
-			plat.addClient();
+			plat.addToCart();
 			break;
 
 		case 6:
