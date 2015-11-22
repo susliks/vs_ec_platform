@@ -15,13 +15,14 @@ using namespace std;
 
 const int MAX_CARD_NUM = 5;
 const int BUF_LEN = 20;
+const int MSG_MAX_LEN = 1000;
 
 string int2string(int num, int len);
 
 struct PlatClientInfo
 {
 	string logId;
-	string bankCard[MAX_CARD_NUM][2];
+	//string bankCard[MAX_CARD_NUM][2];
 };
 
 struct CartProduct
@@ -53,6 +54,8 @@ class Platform
 {
 private:
 	sqlite3 * platDb;
+	int argc;
+	char **argv;
 
 	bool logFlag;
 	PlatClientInfo curClient;
@@ -67,6 +70,11 @@ private:
 	Product* createProduct(string type);
 
 public:
+	Platform(int argc, char **argv);
+
+	int getArgc();
+	char** getArgv();
+
 	bool addClient();
 	void clientInfoUpdate();
 	bool judgeExistClientId(string logId);
@@ -84,6 +92,10 @@ public:
 	bool updateDiscount();		//品类打折
 	double bonusReduction(double curMoney);	//满减优惠
 	bool updateBonus();
+
+	string ec_connect(int argc, char **argv, char* sendbuf);
+	bool createCardRecord(string logId, string bankName, string cardNum);
+	bool boundCardPay(string logId, double cost);
 };
 
 class Product
@@ -113,6 +125,7 @@ public:
 	virtual string getDescription(string productId);
 	virtual void showAllThisType() = 0;
 	bool judgeExistProductId(string productId);
+	double calcCost(Product *product, string productId, int num);
 	double buy(Product *product, string productId, int num);
 
 	//set操作在数据库端完成
@@ -153,4 +166,18 @@ public:
 	void showAllThisType();
 };
 
+#define WIN32_LEAN_AND_MEAN
 
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
+
+// Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
+#pragma comment (lib, "Ws2_32.lib")
+#pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "AdvApi32.lib")
+
+
+#define DEFAULT_BUFLEN 512
+#define DEFAULT_PORT "27015"

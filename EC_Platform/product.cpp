@@ -186,6 +186,18 @@ bool Product::judgeExistProductId(string productId)
 	closeDB();
 }
 
+double Product::calcCost(Product *product, string productId, int num)
+{
+	int preLeft = product->getLeft(productId);
+	if (num > preLeft)
+	{
+		cout << "¿â´æ²»×ã" << endl;
+		return -1;	//´íÎó·µ»Ø
+	}
+	
+	return product->getPrice(productId) * num;
+}
+
 double Product::buy(Product *product, string productId, int num)
 {
 	int preLeft = product->getLeft(productId);

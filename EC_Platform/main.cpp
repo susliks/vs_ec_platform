@@ -6,6 +6,12 @@
 #include "stdafx.h"
 #include "head.h"
 
+Platform::Platform(int argc, char **argv)
+{
+	this->argc = argc;
+	this->argv = argv;
+}
+
 string int2string(int num, int len)	//返回一个长度为len的数字num对应的string
 {
 	char tmpCh[25];
@@ -19,7 +25,7 @@ string int2string(int num, int len)	//返回一个长度为len的数字num对应的string
 	return tmpString;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	/*Product *p = new Food;
 	double res = p->getPrice("00000001");
@@ -28,7 +34,14 @@ int main()
 	p->setDiscount(0.8);
 	res = p->getPrice("00000001");
 	cout << res << endl;*/
-	Platform plat;
+	Platform plat(argc, argv);
+
+	//string tmpMsg = "ICBC" + '\0' + "222" + "\0"
+
+
+	/*char sendMsg[] = "ICBC\1!00000006\1!123\1!10";
+	string getStr = plat.ec_connect(plat.getArgc(), plat.getArgv(), sendMsg);
+	cout << getStr.c_str() << endl;*/
 	
 	bool endFlag = false;
 	while (!endFlag)
@@ -75,6 +88,7 @@ int main()
 
 		case 9:
 			plat.clientInfoUpdate();
+			break;
 
 		case 0:
 			endFlag = true;
