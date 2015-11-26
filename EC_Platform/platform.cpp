@@ -225,7 +225,7 @@ string Platform::getProductType(string productId)
 	result = sqlite3_open("productData.db", &db);
 
 	string SQLCode = "select * from product where productId = \"" + productId + "\";";
-	result = sqlite3_get_table(platDb, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
+	result = sqlite3_get_table(db, SQLCode.c_str(), &dbResult, &nRow, &nColumn, &errmsg);
 
 	sqlite3_close(db);
 
